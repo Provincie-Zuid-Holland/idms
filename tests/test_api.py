@@ -4,7 +4,7 @@
 
 import unittest
 
-import api.contentserver as cs
+import opentext.api.contentserver as cs
 
 
 class TestContentServer(unittest.TestCase):
