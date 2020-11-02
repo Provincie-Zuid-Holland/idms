@@ -43,7 +43,7 @@ class crawler:
         self.includeParentsPath = True
         self.outputColumns = ['properties.parent_id', 'properties.id', 'properties.size', 'properties.create_date', 'properties.modify_date', 'properties.owner', 'properties.create_user_id', 'properties.name', 'properties.type', 'properties.type_name']
 
-        self.debugJson = True
+        self.debugJson = False
 
         if ticket:
             self.ticket = ticket
@@ -89,7 +89,6 @@ class crawler:
         r = self.session.get(url, headers=headers, timeout=60*30)
         r.raise_for_status()
         data = r.json()
-        print(data)
         return data.get('ancestors', [])
 
     def parseNodeColumns(self, dataRow: dict, parents: list = None) -> dict:
