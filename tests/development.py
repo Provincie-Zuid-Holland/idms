@@ -38,6 +38,7 @@ def main():
         idms_password = ARGS.idms_password or getpass.getpass(prompt='IDMS password:')
         idms = cs.crawler(baseUrl, idms_username, idms_password)
 
+    idms.debugJson = True
     arr = idms.children(startNode)
     df = pd.DataFrame(arr)
     print(df)
