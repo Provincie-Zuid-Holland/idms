@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Main application to scrape IDMS
-
-Original script: scrape.py in wob_idms_scraper
-Adapted by: Joana Cardoso
+Developer script to test package while unittests aren't configured yet.
 """
 
 import argparse, getpass, logging, datetime, os

@@ -41,7 +41,7 @@ class crawler:
         self.folderTypes = [0]
 
         self.includeParentsPath = True
-        self.outputColumns = ['properties.parent_id', 'properties.id', 'properties.size', 'properties.create_date', 'properties.modify_date', 'properties.owner', 'properties.create_user_id', 'properties.name', 'properties.type', 'properties.type_name']
+        self.outputColumns = ['properties.parent_id', 'properties.id', 'properties.size', 'properties.create_date', 'properties.modify_date', 'properties.owner', 'properties.create_user_id', 'properties.name', 'properties.description', 'properties.type', 'properties.type_name']
 
         self.debugJson = False
 
@@ -105,7 +105,7 @@ class crawler:
             row[colName] = dotfield(dataRow, colName)
         
         if self.includeParentsPath:
-            row['locationPathString'] = self.flattenParents(parents, dotfield(dataRow, 'properties.name'))
+            row['locationPathString'] = self.flattenParents(parents)
 
         return row
     
@@ -153,3 +153,10 @@ class crawler:
         
         
         return results 
+
+    def search(self, searchWhere: str) -> str:
+        """
+        TODO: Search API endpoint 
+        {{endpoint}}api/v2/search?where=OTObject:733724088
+        """
+        raise Exception("Not yet implemented.")
