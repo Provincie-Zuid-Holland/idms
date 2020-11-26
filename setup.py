@@ -143,7 +143,7 @@ setup(
     #
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['requests'],  # Optional
+    install_requires=['requests>=2.25.0'],  # Optional
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). Users will be able to install these using the "extras"
@@ -154,7 +154,7 @@ setup(
     # Similar to `install_requires` above, these must be valid existing
     # projects.
     extras_require={  # Optional
-        'dev': ['check-manifest', 'python-dotenv'],
+        'dev': ['check-manifest', 'python-dotenv>=0.15.0', 'pandas>=1.1.4', 'openpyxl'],
         'test': ['coverage'],
     },
 

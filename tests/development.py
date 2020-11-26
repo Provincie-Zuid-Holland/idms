@@ -36,14 +36,22 @@ def main():
         idms = cs.crawler(baseUrl, idms_username, idms_password)
 
     idms.debugJson = True
-    arr = idms.children(startNode)
+    # arr = idms.children(startNode)
+    # df = pd.DataFrame(arr)
+    # print(df)
+    # df.to_excel('idmsscraper.xlsx')
+    # parents = idms.parents(startNode)
+    # df = pd.DataFrame(parents)
+    # print(df)
+    # print(idms.flattenParents(parents, "TEST-STRING"))
+
+    keyword1 = "overdevest"
+    keyword2 = "daniel"
+    complexQuery = keyword1 + " prox[1,f] " + keyword2
+    arr = idms.search(complexQuery)
     df = pd.DataFrame(arr)
     print(df)
-    df.to_excel('idmsscraper.xlsx')
-    parents = idms.parents(startNode)
-    df = pd.DataFrame(parents)
-    print(df)
-    print(idms.flattenParents(parents, "TEST-STRING"))
+    df.to_excel('searchresults.xlsx')
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 import requests
+import urllib
 import logging
 import json
 import datetime, time
@@ -41,7 +42,19 @@ class crawler:
         self.folderTypes = [0]
 
         self.includeParentsPath = True
-        self.outputColumns = ['properties.parent_id', 'properties.id', 'properties.size', 'properties.create_date', 'properties.modify_date', 'properties.owner', 'properties.create_user_id', 'properties.name', 'properties.description', 'properties.type', 'properties.type_name']
+        self.outputColumns = ['properties.parent_id', 
+                              'properties.id', 
+                              'properties.size', 
+                              'properties.create_date', 
+                              'properties.modify_date', 
+                              'properties.owner', 
+                              'properties.create_user_id', 
+                              'properties.name', 
+                              'properties.description', 
+                              'properties.type', 
+                              'properties.type_name',
+                              'properties.summary',
+                              'regions.OTLocation']
 
         self.debugJson = False
 
@@ -91,7 +104,7 @@ class crawler:
         data = r.json()
         return data.get('ancestors', [])
 
-    def parseNodeColumns(self, dataRow: dict, parents: list = None) -> dict:
+    def parseNodeColumns(self, dataRow: dict, parents: list = []) -> dict:
         """
         Reduce dict to only usefull output columns based on: `self.outputColumns`
         """
@@ -154,9 +167,42 @@ class crawler:
         
         return results 
 
-    def search(self, searchWhere: str) -> str:
+    def search(self, complexQuery: str, limit: int = 100, metadata: str = "true") -> list:
         """
-        TODO: Search API endpoint 
+        Search API endpoint 
         {{endpoint}}api/v2/search?where=OTObject:733724088
+        First Version
         """
-        raise Exception("Not yet implemented.")
+        results = []
+        headers = {'otcsticket': self.ticket}
+        complexQueryUrlSafe = urllib.parse.quote(complexQuery, safe='')
+        counter = 0
+        url = self.baseUrl + f"/api/v2/search?where={complexQueryUrlSafe}&limit={limit}&metadata={metadata}"
+        while url != "" and counter < self.maxCallsPerFolder:
+            counter = counter + 1
+            r = self.session.get(url, headers=headers, timeout=60*30)
+            r.raise_for_status()
+            data = r.json()
+            if self.debugJson:
+                yyyymmddhhmmss = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+                with open(f"debug_{yyyymmddhhmmss}.json", "w") as f:
+                    json.dump(data, f)
+            
+            # Extract only relevant columns from search results
+            for result in data.get('results', []):
+                dataRow = result.get('data')
+                row = self.parseNodeColumns(dataRow)
+
+                ancestorsList = dotfield(result, 'links.ancestors')
+                ancestorsStr = " > ".join([a.get('name') for a in ancestorsList])
+                row['locationPathString'] = ancestorsStr
+                results.append(row)
+
+            # Determine if there is a next page and prepare for next while-loop.
+            nextUrl = dotfield(data, "collection.paging.links.next.href")
+            logging.debug(f" > nextUrl: {nextUrl}")
+            if nextUrl:
+                url = self.baseUrl + nextUrl
+            else:
+                url = ""
+        return results
