@@ -56,7 +56,8 @@ class crawler:
                               'properties.type', 
                               'properties.type_name',
                               'properties.summary',
-                              'regions.OTLocation']
+                              'regions.OTLocation',
+                              'systemattributes.Dossiernummer']
 
         self.debugJson = False
 
