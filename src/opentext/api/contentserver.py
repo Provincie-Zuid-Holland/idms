@@ -4,7 +4,7 @@ import logging
 import json
 import datetime, time
 import copy
-import opentext.functions as otfunc
+import idms.functions as otfunc
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from functools import reduce
@@ -39,7 +39,9 @@ class crawler:
         self.maxCallsPerFolder = 10000
         self.gracefulSleepSeconds = 0.01
 
-        self.folderTypes = [0]
+        # Type 0 is always a folder, 751 is for ProvZH an E-mailmap and 136 for Samengesteld document and 298 for a Collectie.
+        self.folderTypes = [0, 751, 136, 298]
+        self.folderTypesStopRecursive = [136, 298]
 
         self.includeParentsPath = True
         self.outputColumns = ['properties.parent_id', 
@@ -122,7 +124,7 @@ class crawler:
 
         return row
     
-    def children(self, nodeId: str, parents: list = None) -> list:
+    def children(self, nodeId: str, parents: list = None, stopRecursive: bool = False) -> list:
         """
         Recursive function to craw children of node.
         """
@@ -152,34 +154,51 @@ class crawler:
             page_total = dotfield(data, "collection.paging.page_total", 0)
             for result in data.get('results', []):
                 dataRow = result.get('data')
-                if dotfield(dataRow, "properties.type") in self.folderTypes:
+
+                # Check if a node is a folder type. Some folder types are collections of other nodes
+                # the risk of recursive call a collection is that it can end in an infinity loop.
+                # folderTypesStopRecursive is a list of collectiontypes and children will be fetched.
+                # If there are also subfolders in that collection it won't fetch further.
+                if dotfield(dataRow, "properties.type") in self.folderTypes and stopRecursive == False:
                     time.sleep(self.gracefulSleepSeconds)
                     # Recursive call
                     newParents = copy.deepcopy(parents)
                     newParents.append({'id': dotfield(dataRow, "properties.id"), 'name': dotfield(dataRow, "properties.name"), 'parent_id': dotfield(dataRow, "properties.parent_id"), 'type': dotfield(dataRow, "properties.type"), 'volume_id': dotfield(dataRow, "properties.volume_id"), 'type_name': dotfield(dataRow, "properties.type_name")})
-                    childs = self.children(dotfield(dataRow, "properties.id"), newParents)
+                    if dotfield(dataRow, "properties.type") in self.folderTypesStopRecursive:
+                        stopRecursive = True
+                    else:
+                        stopRecursive = False
+                    childs = self.children(dotfield(dataRow, "properties.id"), newParents, stopRecursive)
                     results = results + childs
                 
                 row = self.parseNodeColumns(dataRow, parents)
 
                 results.append(row)
         
+        if counter >= self.maxCallsPerFolder:
+            raise Exception(f"Stopped due counter ({counter}) reached the maxCallsPerFolder ({self.maxCallsPerFolder}) limit!")
+
         
         return results 
 
-    def search(self, complexQuery: str, limit: int = 100, metadata: str = "true") -> list:
+    def search(self, complexQuery: str, limit: int = 10, metadata: str = "true") -> list:
         """
-        Search API endpoint 
-        {{endpoint}}api/v2/search?where=OTObject:733724088
-        First Version
+        Search API endpoint  
+        Example: {self.baseUrl}/api/v2/search?where=`complexQuery`&limit=`limit`&metadata=`metadata`
+       
+        :param str `complexQuery`:  See documentation for search options for a complexQuery: https://docs2.cer-rec.gc.ca/ll-eng/llisapi.dll?func=help.index&keyword=LL.Search%20Broker.Category
         """
         results = []
         headers = {'otcsticket': self.ticket}
         complexQueryUrlSafe = urllib.parse.quote(complexQuery, safe='')
         counter = 0
         url = self.baseUrl + f"/api/v2/search?where={complexQueryUrlSafe}&limit={limit}&metadata={metadata}"
+        
+        # Retrieve all pages of certain search query using a while loop with security of maxCallsPerFolder variable.
         while url != "" and counter < self.maxCallsPerFolder:
             counter = counter + 1
+
+            # Query Content Server API to search for params
             r = self.session.get(url, headers=headers, timeout=60*30)
             r.raise_for_status()
             data = r.json()
@@ -193,9 +212,10 @@ class crawler:
                 dataRow = result.get('data')
                 row = self.parseNodeColumns(dataRow)
 
-                ancestorsList = dotfield(result, 'links.ancestors')
+                ancestorsList = dotfield(result, 'links.ancestors', [])
                 ancestorsStr = " > ".join([a.get('name') for a in ancestorsList])
                 row['locationPathString'] = ancestorsStr
+                row['complexQuery'] = complexQuery
                 results.append(row)
 
             # Determine if there is a next page and prepare for next while-loop.
@@ -205,4 +225,9 @@ class crawler:
                 url = self.baseUrl + nextUrl
             else:
                 url = ""
+
+        # Inform user if stopped earlier due maxCallsPerFolder variable
+        if counter >= self.maxCallsPerFolder:
+            raise Exception(f"Stopped due counter ({counter}) reached the maxCallsPerFolder ({self.maxCallsPerFolder}) limit!")
+
         return results

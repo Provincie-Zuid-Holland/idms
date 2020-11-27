@@ -29,7 +29,7 @@ setup(
     # There are some restrictions on what makes a valid project name
     # specification here:
     # https://packaging.python.org/specifications/core-metadata/#name
-    name='opentext',  # Required
+    name='idms',  # Required
 
     # Versions should comply with PEP 440:
     # https://www.python.org/dev/peps/pep-0440/
@@ -37,12 +37,12 @@ setup(
     # For a discussion on single-sourcing the version across setup.py and the
     # project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.1.6',  # Required
+    version='0.1.7',  # Required
 
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#summary
-    description='Python class to talk to OpenText REST and Search API, better known as iDMS.',  # Optional
+    description='Python class to talk to idms REST and Search API, better known as iDMS.',  # Optional
 
     # This is an optional longer description of your project that represents
     # the body of text which users will see when they visit PyPI.
@@ -70,7 +70,7 @@ setup(
     #
     # This field corresponds to the "Home-Page" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#home-page-optional
-    url='https://github.com/pypa/opentext',  # Optional
+    url='https://github.com/pypa/idms',  # Optional
 
     # This should be your name or the name of the organization which owns the
     # project.
@@ -114,7 +114,7 @@ setup(
     # Note that this is a list of additional keywords, separated
     # by commas, to be used to assist searching for the distribution in a
     # larger catalog.
-    keywords='opentext, contentserver, restapi, searchapi',  # Optional
+    keywords='idms, contentserver, restapi, searchapi',  # Optional
 
     # When your source code is in a subdirectory under the project root, e.g.
     # `src/`, it is necessary to specify the `package_dir` argument.
@@ -194,9 +194,9 @@ setup(
     # maintainers, and where to support the project financially. The key is
     # what's used to render the link text on PyPI.
     project_urls={  # Optional
-        'Bug Reports': 'https://github.com/ProvZH/opentext/issues',
+        'Bug Reports': 'https://github.com/ProvZH/idms/issues',
         # 'Funding': 'https://donate.pypi.org',
         # 'Say Thanks!': 'http://saythanks.io/to/example',
-        'Source': 'https://github.com/ProvZH/opentext',
+        'Source': 'https://github.com/ProvZH/idms',
     },
 )
