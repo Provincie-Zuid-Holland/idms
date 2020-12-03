@@ -6,7 +6,7 @@ Developer script to test package while unittests aren't configured yet.
 
 import argparse, getpass, logging, datetime, os
 import pandas as pd
-import opentext.api.contentserver as cs
+import idms.api.contentserver as cs
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Application to Search in IDMS and list results')
