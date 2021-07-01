@@ -56,6 +56,7 @@ class crawler:
                               'properties.type', 
                               'properties.type_name',
                               'properties.summary',
+                              'properties.description_multilingual.nl',
                               'regions.OTLocation',
                               'systemattributes.Dossiernummer']
 
