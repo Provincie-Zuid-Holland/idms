@@ -42,5 +42,8 @@ df.to_excel("searchresults.xlsx")
 # Development
 Package is hosted on GitHub. After each change increase version number and create a new Release on GitHub. The pipeline will trigger a release to PyPi (see status batch above).
 
+## Collaborate?
+Send a PR!
+
 # Disclaimer
 The developers of this package are not affiliated with OpenText.
