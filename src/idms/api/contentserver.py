@@ -19,7 +19,7 @@ def dotfield(input_dict: dict, input_key: str, notFound=None) -> str:
     return reduce(lambda d, k: d.get(k) if d else notFound, input_key.split("."), input_dict)
 
 class crawler:
-    def __init__(self, baseUrl: str, username: str = None, password: str = None, ticket: str = None):
+    def __init__(self, baseUrl: str, username: str = None, password: str = None, ticket: str = None, verifySSL: bool = True):
         
         # Settings for retry and auto retry if error code 500 is given
         retry = Retry(
@@ -33,6 +33,7 @@ class crawler:
         # Mounts a session for re-use authorization
         self.baseUrl = baseUrl
         self.session = requests.Session()
+        self.session.verify = verifySSL
         self.session.mount(baseUrl, HTTPAdapter(max_retries=retry))
 
         # Safety measures to not to overload the server.
@@ -75,6 +76,11 @@ class crawler:
         response = self.session.post(url, data=body)
         try:
             r = response.json()
+            error = r.get('error')
+            if error:
+                raise Exception('Username or password not correct!')
+            else:
+                logging.info("Succesfull logged in to ContentServer.")
             return r.get('ticket')
         except:
             print(response)
@@ -229,6 +235,6 @@ class crawler:
 
         # Inform user if stopped earlier due maxCallsPerFolder variable
         if counter >= self.maxCallsPerFolder:
-            raise Exception(f"Stopped due counter ({counter}) reached the maxCallsPerFolder ({self.maxCallsPerFolder}) limit!")
+            logging.warning(f"Stopped due counter ({counter}) reached the maxCallsPerFolder ({self.maxCallsPerFolder}) limit!")
 
         return results

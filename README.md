@@ -8,8 +8,8 @@ Python class to talk to iDMS REST and Search API within Provincie Zuid-Holland.
 # Goal
 The goal of the package is to have an easy interface to use the API in Python.
 
-Mainly focussed to work with Content Server 20.2, see [API docs](
-https://appworksdeveloper.opentext.com/webaccess/#url=%2Fawd%2Fresources%2Fapis%2Fcs-rest-api-for-cs-20-2&tab=501).
+Mainly focussed to work with Content Server 21.4, see [API docs](
+https://developer.opentext.com/apis/14ba85a7-4693-48d3-8c93-9214c663edd2/d7540c64-7da2-4554-9966-069c56a9341d/09aaed57-c70b-4092-bace-762b42520293).
 
 # Quick start
 ## Requirements
