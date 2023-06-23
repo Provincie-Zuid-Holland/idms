@@ -227,8 +227,12 @@ class crawler:
 
         return results
 
-    def search(
-        self, complexQuery: str, limit: int = 10, metadata: str = "true"
+   def search(
+        self,
+        complexQuery: str,
+        limit: int = 10,
+        metadata: str = "true",
+        slice: str = None,
     ) -> list:
         """
         Search API endpoint
@@ -238,19 +242,19 @@ class crawler:
         """
         results = []
         headers = {"otcsticket": self.ticket}
-        complexQueryUrlSafe = urllib.parse.quote(complexQuery, safe="")
         counter = 0
-        url = (
-            self.baseUrl
-            + f"/api/v2/search?where={complexQueryUrlSafe}&limit={limit}&metadata={metadata}"
-        )
+        url = self.baseUrl + "/api/v2/search"
+
+        data = {"where": complexQuery, "limit": limit, "metadata": metadata}
+        if slice:
+            data["slice"] = slice
 
         # Retrieve all pages of certain search query using a while loop with security of maxCallsPerFolder variable.
         while url != "" and counter < self.maxCallsPerFolder:
             counter = counter + 1
 
             # Query Content Server API to search for params
-            r = self.session.get(url, headers=headers, timeout=60 * 30)
+            r = self.session.post(url, headers=headers, timeout=60 * 30, data=data)
             r.raise_for_status()
             data = r.json()
             if self.debugJson:
