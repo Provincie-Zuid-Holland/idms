@@ -227,7 +227,7 @@ class crawler:
 
         return results
 
-   def search(
+    def search(
         self,
         complexQuery: str,
         limit: int = 10,
