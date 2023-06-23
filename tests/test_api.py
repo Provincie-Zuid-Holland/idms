@@ -8,10 +8,9 @@ import idms.api.contentserver as cs
 
 
 class TestContentServer(unittest.TestCase):
-
     def test_object_init(self):
         self.assertTrue(isinstance(cs.crawler, object))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
