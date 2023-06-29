@@ -254,7 +254,12 @@ class crawler:
             counter = counter + 1
 
             # Query Content Server API to search for params
-            r = self.session.post(url, headers=headers, timeout=60 * 30, data=data)
+            # First time we need to POST the data, after that we need to GET the next page
+            if not url.find("?"):
+                r = self.session.post(url, headers=headers, timeout=60 * 30, data=data)
+            else:
+                r = self.session.get(url, headers=headers, timeout=60 * 30)
+
             r.raise_for_status()
             data = r.json()
             if self.debugJson:
@@ -274,6 +279,7 @@ class crawler:
                 results.append(row)
 
             # Determine if there is a next page and prepare for next while-loop.
+            # nextUrl contains a GET url to retrieve the next page.
             nextUrl = dotfield(data, "collection.paging.links.next.href")
             logging.debug(f" > nextUrl: {nextUrl}")
             if nextUrl:
