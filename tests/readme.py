@@ -14,7 +14,7 @@ else:
 
 import getpass
 import idms.api.contentserver as cs
-import pandas  # optional
+import pandas as pd  # optional
 
 import logging
 
@@ -29,7 +29,7 @@ array = idms.search("overdevest prox[1,f] daniel)")
 print(f"Found {len(array)} search results")
 
 # optional load results in a data frame to export results.
-df = pd.DataFrame(arr)
+df = pd.DataFrame(array)
 print(df)
 
 # Export results to Excel
