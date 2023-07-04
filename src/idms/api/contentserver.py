@@ -7,6 +7,7 @@ import copy
 import idms.functions as otfunc
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+from urllib.parse import urlparse, urlunparse, parse_qs
 from functools import reduce
 
 
@@ -245,30 +246,37 @@ class crawler:
         counter = 0
         url = self.baseUrl + "/api/v2/search"
 
-        data = {"where": complexQuery, "limit": limit, "metadata": metadata}
+        base_data = {"where": complexQuery, "limit": limit, "metadata": metadata}
         if slice:
-            data["slice"] = slice
+            base_data["slice"] = slice
 
         # Retrieve all pages of certain search query using a while loop with security of maxCallsPerFolder variable.
         while url != "" and counter < self.maxCallsPerFolder:
             counter = counter + 1
-
+            data = base_data.copy()
             # Query Content Server API to search for params
-            # First time we need to POST the data, after that we need to GET the next page
-            if not "?" in url:
-                r = self.session.post(url, headers=headers, timeout=60 * 30, data=data)
-            else:
-                r = self.session.get(url, headers=headers, timeout=60 * 30)
+            if "?" in url:
+                url, params = url.split("?")
 
+                # Split the query string on the '&' character
+                query_params = params.split('&')
+
+                # Loop through each key-value pair and add it to the dictionary
+                for param in query_params:
+                    key, value = param.split('=')
+                    data[key] = value
+
+            logging.debug(data)
+            r = self.session.post(url, headers=headers, timeout=60 * 30, data=data)
             r.raise_for_status()
-            data = r.json()
+            search_results = r.json()
             if self.debugJson:
                 yyyymmddhhmmss = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
                 with open(f"debug_{yyyymmddhhmmss}.json", "w") as f:
-                    json.dump(data, f)
+                    json.dump(search_results, f)
 
             # Extract only relevant columns from search results
-            for result in data.get("results", []):
+            for result in search_results.get("results", []):
                 dataRow = result.get("data")
                 row = self.parseNodeColumns(dataRow)
 
@@ -280,7 +288,8 @@ class crawler:
 
             # Determine if there is a next page and prepare for next while-loop.
             # nextUrl contains a GET url to retrieve the next page.
-            nextUrl = dotfield(data, "collection.paging.links.next.href")
+            nextUrl = dotfield(search_results, "collection.paging.links.next.href")
+
             logging.debug(f" > nextUrl: {nextUrl}")
             if nextUrl:
                 url = self.baseUrl + nextUrl

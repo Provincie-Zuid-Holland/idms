@@ -20,12 +20,14 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
-baseUrl = "FILL IN YOUR CONTENT SERVER URL HERE"
+baseUrl = 'FILL IN URL'
 idms_username = getpass.getpass(prompt="IDMS username:")
 idms_password = getpass.getpass(prompt="IDMS password:")
 idms = cs.crawler(baseUrl, idms_username, idms_password, verifySSL=False)
-
-array = idms.search("overdevest prox[1,f] daniel)")
+idms.debugJson = True
+logging.debug(f"idms.ticket: {idms.ticket}")
+idms.outputColumns.append("versions.version_number")
+array = idms.search("test+zoekwoord", limit=10, slice="12345678")
 print(f"Found {len(array)} search results")
 
 # optional load results in a data frame to export results.
