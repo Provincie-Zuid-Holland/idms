@@ -255,7 +255,7 @@ class crawler:
 
             # Query Content Server API to search for params
             # First time we need to POST the data, after that we need to GET the next page
-            if not url.find("?"):
+            if not "?" in url:
                 r = self.session.post(url, headers=headers, timeout=60 * 30, data=data)
             else:
                 r = self.session.get(url, headers=headers, timeout=60 * 30)
