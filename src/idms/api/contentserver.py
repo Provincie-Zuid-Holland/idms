@@ -16,10 +16,16 @@ def dotfield(input_dict: dict, input_key: str, notFound=None) -> str:
 
     Example:
     dotfield({"a": {"b": {"c": "def"}}}, "a.b.c") -> "def"
+
+    TODO: Add support for list (error: AttributeError: 'list' object has no attribute 'get')
     """
-    return reduce(
-        lambda d, k: d.get(k) if d else notFound, input_key.split("."), input_dict
-    )
+    try:
+        return reduce(
+            lambda d, k: d.get(k) if d else notFound, input_key.split("."), input_dict
+        )
+    except Exception as err:
+        logging.debug(f"Dotfield error: {err}\n{input_key}")
+        return ""
 
 
 class crawler:
