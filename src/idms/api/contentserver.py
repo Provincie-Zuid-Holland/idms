@@ -37,6 +37,7 @@ class crawler:
         password: str = None,
         ticket: str = None,
         verifySSL: bool = True,
+        maxErrorRetry: int = 30
     ):
         # Settings for retry and auto retry if error code 500 is given
         retry = Retry(
@@ -81,6 +82,9 @@ class crawler:
         ]
 
         self.debugJson = False
+
+        # Retry faulty urls
+        self.maxErrorRetry = maxErrorRetry
 
         if ticket:
             self.ticket = ticket
@@ -251,55 +255,74 @@ class crawler:
         headers = {"otcsticket": self.ticket}
         counter = 0
         url = self.baseUrl + "/api/v2/search"
+        max_error_retries = 0
 
         base_data = {"where": complexQuery, "limit": limit, "metadata": metadata}
         if slice:
             base_data["slice"] = slice
 
         # Retrieve all pages of certain search query using a while loop with security of maxCallsPerFolder variable.
-        while url != "" and counter < self.maxCallsPerFolder:
-            counter = counter + 1
-            data = base_data.copy()
-            # Query Content Server API to search for params
-            if "?" in url:
-                url, params = url.split("?")
+        while url != "" and counter < self.maxCallsPerFolder and max_error_retries < self.maxErrorRetry:
+            try:
+                counter = counter + 1
+                data = base_data.copy()
+                # Query Content Server API to search for params
+                if "?" in url:
+                    url, params = url.split("?")
 
-                # Split the query string on the '&' character
-                query_params = params.split('&')
+                    # Split the query string on the '&' character
+                    query_params = params.split('&')
 
-                # Loop through each key-value pair and add it to the dictionary
-                for param in query_params:
-                    key, value = param.split('=')
-                    data[key] = value
+                    # Loop through each key-value pair and add it to the dictionary
+                    for param in query_params:
+                        key, value = param.split('=')
+                        data[key] = value
 
-            logging.debug(data)
-            r = self.session.post(url, headers=headers, timeout=60 * 30, data=data)
-            r.raise_for_status()
-            search_results = r.json()
-            if self.debugJson:
-                yyyymmddhhmmss = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
-                with open(f"debug_{yyyymmddhhmmss}.json", "w") as f:
-                    json.dump(search_results, f)
+                logging.debug(data)
 
-            # Extract only relevant columns from search results
-            for result in search_results.get("results", []):
-                dataRow = result.get("data")
-                row = self.parseNodeColumns(dataRow)
+                # The post might sometimes fail thus stop the whole process, i have added a retry if the post fails to try again, this seems to work
+                r = self.session.post(url, headers=headers, timeout=60 * 30, data=data)             
+                r.raise_for_status()
+                search_results = r.json()
 
-                ancestorsList = dotfield(result, "links.ancestors", [])
-                ancestorsStr = " > ".join([a.get("name") for a in ancestorsList])
-                row["locationPathString"] = ancestorsStr
-                row["complexQuery"] = complexQuery
-                results.append(row)
 
-            # Determine if there is a next page and prepare for next while-loop.
-            # nextUrl contains a GET url to retrieve the next page.
-            nextUrl = dotfield(search_results, "collection.paging.links.next.href")
-            logging.debug(f" > nextUrl: {nextUrl}")
-            if nextUrl:
-                url = self.baseUrl + nextUrl
-            else:
-                url = ""
+                if self.debugJson:
+                    yyyymmddhhmmss = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+                    with open(f"debug_{yyyymmddhhmmss}.json", "w") as f:
+                        json.dump(search_results, f)
+
+                # Extract only relevant columns from search results
+                for result in search_results.get("results", []):
+                    dataRow = result.get("data")
+                    row = self.parseNodeColumns(dataRow)
+
+                    ancestorsList = dotfield(result, "links.ancestors", [])
+                    ancestorsStr = " > ".join([a.get("name") for a in ancestorsList])
+                    row["locationPathString"] = ancestorsStr
+                    row["complexQuery"] = complexQuery
+                    results.append(row)
+
+                # Determine if there is a next page and prepare for next while-loop.
+                # nextUrl contains a GET url to retrieve the next page.
+                nextUrl = dotfield(search_results, "collection.paging.links.next.href")
+               
+                logging.debug(f" > nextUrl: {nextUrl}")
+
+                if nextUrl:
+                    url = self.baseUrl + nextUrl
+                else:
+                    url = ""
+
+            except Exception as e:              
+                    max_error_retries = max_error_retries+1
+                    print(e)
+                    logging.debug("Error: "+str(e))
+
+        # Inform the user that the max error retries has been met.
+        if max_error_retries >= self.maxErrorRetry:
+              logging.warning(
+                f"Stopped due max error tries: ({max_error_retries}) reached the max error retry ({self.maxErrorRetry}) limit!"
+            )
 
         # Inform user if stopped earlier due maxCallsPerFolder variable
         if counter >= self.maxCallsPerFolder:
