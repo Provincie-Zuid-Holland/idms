@@ -37,15 +37,15 @@ class crawler:
         password: str = None,
         ticket: str = None,
         verifySSL: bool = True,
-        maxErrorRetry: int = 30
+        maxErrorRetry: int = 10
     ):
         # Settings for retry and auto retry if error code 500 is given
         retry = Retry(
-            total=5,
-            read=5,
-            connect=5,
-            backoff_factor=0.3,
-            status_forcelist=(500, 502, 504),
+            total=10,
+            read=10,
+            connect=10,
+            backoff_factor=1,
+            status_forcelist=(500, 502, 503, 504),
         )
 
         # Mounts a session for re-use authorization
@@ -83,7 +83,7 @@ class crawler:
 
         self.debugJson = False
 
-        # Retry faulty urls
+        # Retry faulty urls, extra fall back when it's not a HTTP code.
         self.maxErrorRetry = maxErrorRetry
 
         if ticket:
@@ -314,8 +314,8 @@ class crawler:
                     url = ""
 
             except Exception as e:              
-                    max_error_retries = max_error_retries+1
-                    print(e)
+                    max_error_retries = max_error_retries + 1
+                    print(e)                               
                     logging.debug("Error: "+str(e))
 
         # Inform the user that the max error retries has been met.
