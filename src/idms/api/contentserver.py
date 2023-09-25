@@ -21,9 +21,7 @@ def dotfield(input_dict: dict, input_key: str, notFound=None) -> str:
     TODO: Add support for list (error: AttributeError: 'list' object has no attribute 'get')
     """
     try:
-        return reduce(
-            lambda d, k: d.get(k) if d else notFound, input_key.split("."), input_dict
-        )
+        return reduce(lambda d, k: d.get(k) if d else notFound, input_key.split("."), input_dict)
     except Exception as err:
         logging.debug(f"Dotfield error: {err}\n{input_key}")
         return ""
@@ -37,7 +35,7 @@ class crawler:
         password: str = None,
         ticket: str = None,
         verifySSL: bool = True,
-        maxErrorRetry: int = 10
+        maxErrorRetry: int = 10,
     ):
         # Settings for retry and auto retry if error code 500 is given
         retry = Retry(
@@ -144,13 +142,9 @@ class crawler:
         row = {}
 
         nodeId = dotfield(dataRow, "properties.id")
-        row[
-            "downloadUrl"
-        ] = f"/otcs/llisapi.dll?func=ll&objId={nodeId}&objAction=download"
+        row["downloadUrl"] = f"/otcs/llisapi.dll?func=ll&objId={nodeId}&objAction=download"
         row["viewUrl"] = f"/otcs/llisapi.dll?func=ll&objId={nodeId}&objAction=browse"
-        row["nodeType"] = otfunc.mimetype2FileType(
-            dotfield(dataRow, "properties.mime_type")
-        )
+        row["nodeType"] = otfunc.mimetype2FileType(dotfield(dataRow, "properties.mime_type"))
         for colName in self.outputColumns:
             row[colName] = dotfield(dataRow, colName)
 
@@ -159,9 +153,7 @@ class crawler:
 
         return row
 
-    def children(
-        self, nodeId: str, parents: list = None, stopRecursive: bool = False
-    ) -> list:
+    def children(self, nodeId: str, parents: list = None, stopRecursive: bool = False) -> list:
         """
         Recursive function to craw children of node.
         """
@@ -176,9 +168,7 @@ class crawler:
         results = []
         while page <= page_total and counter < self.maxCallsPerFolder:
             counter = counter + 1
-            url = (
-                self.baseUrl + f"/api/v2/nodes/{nodeId}/nodes?limit={limit}&page={page}"
-            )
+            url = self.baseUrl + f"/api/v2/nodes/{nodeId}/nodes?limit={limit}&page={page}"
             logging.debug(f"url: {url}")
             logging.debug(headers)
             r = self.session.get(url, headers=headers, timeout=60 * 30)
@@ -198,10 +188,7 @@ class crawler:
                 # the risk of recursive call a collection is that it can end in an infinity loop.
                 # folderTypesStopRecursive is a list of collectiontypes and children will be fetched.
                 # If there are also subfolders in that collection it won't fetch further.
-                if (
-                    dotfield(dataRow, "properties.type") in self.folderTypes
-                    and stopRecursive == False
-                ):
+                if dotfield(dataRow, "properties.type") in self.folderTypes and stopRecursive == False:
                     time.sleep(self.gracefulSleepSeconds)
                     # Recursive call
                     newParents = copy.deepcopy(parents)
@@ -215,16 +202,11 @@ class crawler:
                             "type_name": dotfield(dataRow, "properties.type_name"),
                         }
                     )
-                    if (
-                        dotfield(dataRow, "properties.type")
-                        in self.folderTypesStopRecursive
-                    ):
+                    if dotfield(dataRow, "properties.type") in self.folderTypesStopRecursive:
                         stopRecursive = True
                     else:
                         stopRecursive = False
-                    childs = self.children(
-                        dotfield(dataRow, "properties.id"), newParents, stopRecursive
-                    )
+                    childs = self.children(dotfield(dataRow, "properties.id"), newParents, stopRecursive)
                     results = results + childs
 
                 row = self.parseNodeColumns(dataRow, parents)
@@ -268,23 +250,24 @@ class crawler:
                 data = base_data.copy()
                 # Query Content Server API to search for params
                 if "?" in url:
-                    url, params = url.split("?")
+                    post_url, params = url.split("?")
 
                     # Split the query string on the '&' character
-                    query_params = params.split('&')
+                    query_params = params.split("&")
 
                     # Loop through each key-value pair and add it to the dictionary
                     for param in query_params:
-                        key, value = param.split('=')
+                        key, value = param.split("=")
                         data[key] = value
+                else:
+                    post_url = url
 
                 logging.debug(data)
 
                 # The post might sometimes fail thus stop the whole process, i have added a retry if the post fails to try again, this seems to work
-                r = self.session.post(url, headers=headers, timeout=60 * 30, data=data)             
+                r = self.session.post(post_url, headers=headers, timeout=60 * 30, data=data)
                 r.raise_for_status()
                 search_results = r.json()
-
 
                 if self.debugJson:
                     yyyymmddhhmmss = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
@@ -305,7 +288,7 @@ class crawler:
                 # Determine if there is a next page and prepare for next while-loop.
                 # nextUrl contains a GET url to retrieve the next page.
                 nextUrl = dotfield(search_results, "collection.paging.links.next.href")
-               
+
                 logging.debug(f" > nextUrl: {nextUrl}")
 
                 if nextUrl:
@@ -313,14 +296,14 @@ class crawler:
                 else:
                     url = ""
 
-            except Exception as e:              
-                    max_error_retries = max_error_retries + 1
-                    print(e)                               
-                    logging.debug("Error: "+str(e))
+            except Exception as e:
+                max_error_retries = max_error_retries + 1
+                print(e)
+                logging.debug("Error: " + str(e))
 
         # Inform the user that the max error retries has been met.
         if max_error_retries >= self.maxErrorRetry:
-              logging.warning(
+            logging.warning(
                 f"Stopped due max error tries: ({max_error_retries}) reached the max error retry ({self.maxErrorRetry}) limit!"
             )
 
