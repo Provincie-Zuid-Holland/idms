@@ -9,6 +9,10 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from urllib.parse import urlparse, urlunparse, parse_qs
 from functools import reduce
+import os
+import uuid
+import time
+import random
 
 
 def dotfield(input_dict: dict, input_key: str, notFound=None) -> str:
@@ -226,6 +230,7 @@ class crawler:
         limit: int = 10,
         metadata: str = "true",
         slice: str = None,
+        resume_last_position = True
     ) -> list:
         """
         Search API endpoint
@@ -233,10 +238,21 @@ class crawler:
 
         :param str `complexQuery`:  See documentation for search options for a complexQuery: https://docs2.cer-rec.gc.ca/ll-eng/llisapi.dll?func=help.index&keyword=LL.Search%20Broker.Category
         """
+
+         
+        
+        file_path_resume = os.getcwd()+"/"+str(complexQuery)+"_last_position.txt"
+
         results = []
         headers = {"otcsticket": self.ticket}
         counter = 0
-        url = self.baseUrl + "/api/v2/search"
+
+        if os.path.exists(file_path_resume):       
+            with open(file_path_resume, "r") as file:
+                url  = file.read()
+        else:
+            url = self.baseUrl + "/api/v2/search"
+
         max_error_retries = 0
 
         base_data = {"where": complexQuery, "limit": limit, "metadata": metadata}
@@ -293,6 +309,8 @@ class crawler:
 
                 if nextUrl:
                     url = self.baseUrl + nextUrl
+                    with open(file_path_resume, "w") as file:              
+                        file.write(str(url))
                 else:
                     url = ""
 
@@ -303,14 +321,15 @@ class crawler:
 
         # Inform the user that the max error retries has been met.
         if max_error_retries >= self.maxErrorRetry:
-            logging.warning(
-                f"Stopped due max error tries: ({max_error_retries}) reached the max error retry ({self.maxErrorRetry}) limit!"
-            )
+            logging.warning(f"Stopped due max error tries: ({max_error_retries}) reached the max error retry ({self.maxErrorRetry}) limit!")
+            with open(file_path_resume, "w") as file:              
+                file.write(str(url))
 
+        
         # Inform user if stopped earlier due maxCallsPerFolder variable
         if counter >= self.maxCallsPerFolder:
-            logging.warning(
-                f"Stopped due counter ({counter}) reached the maxCallsPerFolder ({self.maxCallsPerFolder}) limit!"
-            )
+            logging.warning(f"Stopped due counter ({counter}) reached the maxCallsPerFolder ({self.maxCallsPerFolder}) limit!")
+            with open(file_path_resume, "w") as file:              
+                file.write(str(url))
 
         return results
