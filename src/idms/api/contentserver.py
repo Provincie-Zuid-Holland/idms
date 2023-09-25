@@ -238,16 +238,14 @@ class crawler:
 
         :param str `complexQuery`:  See documentation for search options for a complexQuery: https://docs2.cer-rec.gc.ca/ll-eng/llisapi.dll?func=help.index&keyword=LL.Search%20Broker.Category
         """
-
-         
-        
+    
         file_path_resume = os.getcwd()+"/"+str(complexQuery)+"_last_position.txt"
 
         results = []
         headers = {"otcsticket": self.ticket}
         counter = 0
 
-        if os.path.exists(file_path_resume):       
+        if os.path.exists(file_path_resume) and resume_last_position is True:       
             with open(file_path_resume, "r") as file:
                 url  = file.read()
         else:
