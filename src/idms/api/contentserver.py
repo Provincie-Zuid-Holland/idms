@@ -1,5 +1,4 @@
 import requests
-import urllib
 import logging
 import json
 import datetime, time
@@ -8,11 +7,11 @@ import idms.functions as otfunc
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from urllib.parse import urlparse, urlunparse, parse_qs
+from urllib.request import pathname2url
 from functools import reduce
 import os
-import uuid
 import time
-import random
+import numpy as np
 
 
 def dotfield(input_dict: dict, input_key: str, notFound=None) -> str:
@@ -40,12 +39,13 @@ class crawler:
         ticket: str = None,
         verifySSL: bool = True,
         maxErrorRetry: int = 10,
+        post_error_retries: int = 10
     ):
         # Settings for retry and auto retry if error code 500 is given
         retry = Retry(
-            total=10,
-            read=10,
-            connect=10,
+            total=post_error_retries,
+            read=post_error_retries,
+            connect=post_error_retries,
             backoff_factor=1,
             status_forcelist=(500, 502, 503, 504),
         )
@@ -60,7 +60,7 @@ class crawler:
         self.maxCallsPerFolder = 10000
         self.gracefulSleepSeconds = 0.01
 
-        # Type 0 is always a folder, 751 is for ProvZH an E-mailmap and 136 for Samengesteld document and 298 for a Collectie.
+        # Type 0 is always a folder, 751 is for ProvZH and E-mailmap and 136 for Samengesteld document and 298 for a Collectie.
         self.folderTypes = [0, 751, 136, 298]
         self.folderTypesStopRecursive = [136, 298]
 
@@ -83,7 +83,7 @@ class crawler:
             "systemattributes.Dossiernummer",
         ]
 
-        self.debugJson = False
+        self.debugJson = True
 
         # Retry faulty urls, extra fall back when it's not a HTTP code.
         self.maxErrorRetry = maxErrorRetry
@@ -239,9 +239,9 @@ class crawler:
         :param str `complexQuery`:  See documentation for search options for a complexQuery: https://docs2.cer-rec.gc.ca/ll-eng/llisapi.dll?func=help.index&keyword=LL.Search%20Broker.Category
         """
     
-        file_path_resume = os.getcwd()+"/"+str(complexQuery)+"_last_position.txt"
+        file_path_resume = os.getcwd()+"/"+pathname2url(complexQuery)[0:15]+"_last_position.txt"
 
-        results = []
+        results =np.array([])
         headers = {"otcsticket": self.ticket}
         counter = 0
 
@@ -297,7 +297,7 @@ class crawler:
                     ancestorsStr = " > ".join([a.get("name") for a in ancestorsList])
                     row["locationPathString"] = ancestorsStr
                     row["complexQuery"] = complexQuery
-                    results.append(row)
+                    results = np.append(results, row)
 
                 # Determine if there is a next page and prepare for next while-loop.
                 # nextUrl contains a GET url to retrieve the next page.
@@ -330,4 +330,4 @@ class crawler:
             with open(file_path_resume, "w") as file:              
                 file.write(str(url))
 
-        return results
+        return results.tolist()
