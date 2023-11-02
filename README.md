@@ -1,7 +1,7 @@
 # iDMS
 
 ![Upload Python Package](https://github.com/ProvZH/iDMS/workflows/Upload%20Python%20Package/badge.svg)
-test
+
 
 Python class to talk to iDMS REST and Search API within Provincie Zuid-Holland.
 
