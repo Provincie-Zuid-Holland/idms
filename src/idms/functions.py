@@ -27,7 +27,7 @@ def mimetype2FileType(mimetype: str) -> str:
         "application/zip": "zip",
         "message/rfc822": "e-mail",
         "image/jpeg": "Afbeelding",
-        "Mimetype not Found: None": "Samengesteld document/Snelkoppeling",
+        "None": "Samengesteld document/Snelkoppeling",
         "application/epub+zip": "epub+zip",
         "application/postscript": "Adobe Illustrator",
         "application/rtf": "text",
@@ -69,13 +69,11 @@ def mimetype2FileType(mimetype: str) -> str:
         "application/java": "java",
         "text/richtext": "text",
         "image/gif": "afbeelding",
-        "Mimetype not Found: image/x-citrix-pjpeg": "afbeelding",
-        "Mimetype not Found: application/vnd.ms-excel.sheet.12": "Excel",
-        "Mimetype not Found: application/vnd.ms-visio.drawing": "drawing",
-        "Mimetype not Found: image/vnd.dgn": "DGN file",
-        "Mimetype not Found: application/x-asap": "Compressed archive file",
-        "Mimetype not Found: image/x-emf": "afbeelding",
+        "image/x-citrix-pjpeg": "afbeelding",
+        "application/vnd.ms-excel.sheet.12": "Excel",
+        "application/vnd.ms-visio.drawing": "drawing",
+        "image/vnd.dgn": "DGN file",
+        "application/x-asap": "Compressed archive file",
+        "image/x-emf": "afbeelding",
     }
-    return convertDict.get(mimetype) or "" + str(
-        mimetype
-    )  # or get_mime_type_description(mimetype)
+    return convertDict.get(mimetype) or "" + str(mimetype)  # or get_mime_type_description(mimetype)
