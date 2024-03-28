@@ -1,17 +1,19 @@
-import requests
-import logging
-import json
-import datetime, time
 import copy
-import idms.functions as otfunc
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
-from urllib.parse import urlparse, urlunparse, parse_qs
-from urllib.request import pathname2url
-from functools import reduce
+import datetime
+import json
+import logging
 import os
 import time
+from functools import reduce
+from urllib.parse import parse_qs, urlparse, urlunparse
+from urllib.request import pathname2url
+
 import numpy as np
+import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
+import idms.functions as otfunc
 
 
 def dotfield(input_dict: dict, input_key: str, notFound=None) -> str:
@@ -39,7 +41,7 @@ class crawler:
         ticket: str = None,
         verifySSL: bool = True,
         maxErrorRetry: int = 10,
-        post_error_retries: int = 10
+        post_error_retries: int = 10,
     ):
         # Settings for retry and auto retry if error code 500 is given
         retry = Retry(
@@ -230,7 +232,7 @@ class crawler:
         limit: int = 10,
         metadata: str = "true",
         slice: str = None,
-        resume_last_position = True
+        resume_last_position=True,
     ) -> list:
         """
         Search API endpoint
@@ -238,16 +240,16 @@ class crawler:
 
         :param str `complexQuery`:  See documentation for search options for a complexQuery: https://docs2.cer-rec.gc.ca/ll-eng/llisapi.dll?func=help.index&keyword=LL.Search%20Broker.Category
         """
-    
-        file_path_resume = os.getcwd()+"/"+pathname2url(complexQuery)[0:15]+"_last_position.txt"
 
-        results =np.array([])
+        file_path_resume = os.getcwd() + "/" + pathname2url(complexQuery)[0:15] + "_last_position.txt"
+
+        results = np.array([])
         headers = {"otcsticket": self.ticket}
         counter = 0
 
-        if os.path.exists(file_path_resume) and resume_last_position is True:       
+        if os.path.exists(file_path_resume) and resume_last_position is True:
             with open(file_path_resume, "r") as file:
-                url  = file.read()
+                url = file.read()
         else:
             url = self.baseUrl + "/api/v2/search"
 
@@ -307,7 +309,7 @@ class crawler:
 
                 if nextUrl:
                     url = self.baseUrl + nextUrl
-                    with open(file_path_resume, "w") as file:              
+                    with open(file_path_resume, "w") as file:
                         file.write(str(url))
                 else:
                     url = ""
@@ -319,15 +321,18 @@ class crawler:
 
         # Inform the user that the max error retries has been met.
         if max_error_retries >= self.maxErrorRetry:
-            logging.warning(f"Stopped due max error tries: ({max_error_retries}) reached the max error retry ({self.maxErrorRetry}) limit!")
-            with open(file_path_resume, "w") as file:              
+            logging.warning(
+                f"Stopped due max error tries: ({max_error_retries}) reached the max error retry ({self.maxErrorRetry}) limit!"
+            )
+            with open(file_path_resume, "w") as file:
                 file.write(str(url))
 
-        
         # Inform user if stopped earlier due maxCallsPerFolder variable
         if counter >= self.maxCallsPerFolder:
-            logging.warning(f"Stopped due counter ({counter}) reached the maxCallsPerFolder ({self.maxCallsPerFolder}) limit!")
-            with open(file_path_resume, "w") as file:              
+            logging.warning(
+                f"Stopped due counter ({counter}) reached the maxCallsPerFolder ({self.maxCallsPerFolder}) limit!"
+            )
+            with open(file_path_resume, "w") as file:
                 file.write(str(url))
 
         return results.tolist()
