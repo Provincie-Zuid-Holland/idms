@@ -26,9 +26,7 @@ def dotfield(input_dict: dict, input_key: str, notFound=None) -> str:
     TODO: Add support for list (error: AttributeError: 'list' object has no attribute 'get')
     """
     try:
-        return reduce(
-            lambda d, k: d.get(k) if d else notFound, input_key.split("."), input_dict
-        )
+        return reduce(lambda d, k: d.get(k) if d else notFound, input_key.split("."), input_dict)
     except Exception as err:
         logging.debug(f"Dotfield error: {err}\n{input_key}")
         return ""
@@ -150,13 +148,9 @@ class crawler:
         row = {}
 
         nodeId = dotfield(dataRow, "properties.id")
-        row[
-            "downloadUrl"
-        ] = f"/otcs/llisapi.dll?func=ll&objId={nodeId}&objAction=download"
+        row["downloadUrl"] = f"/otcs/llisapi.dll?func=ll&objId={nodeId}&objAction=download"
         row["viewUrl"] = f"/otcs/llisapi.dll?func=ll&objId={nodeId}&objAction=browse"
-        row["nodeType"] = otfunc.mimetype2FileType(
-            dotfield(dataRow, "properties.mime_type")
-        )
+        row["nodeType"] = otfunc.mimetype2FileType(dotfield(dataRow, "properties.mime_type"))
         for colName in self.outputColumns:
             row[colName] = dotfield(dataRow, colName)
 
@@ -165,9 +159,7 @@ class crawler:
 
         return row
 
-    def children(
-        self, nodeId: str, parents: list = None, stopRecursive: bool = False
-    ) -> list:
+    def children(self, nodeId: str, parents: list = None, stopRecursive: bool = False) -> list:
         """
         Recursive function to craw children of node.
         """
@@ -182,9 +174,7 @@ class crawler:
         results = []
         while page <= page_total and counter < self.maxCallsPerFolder:
             counter = counter + 1
-            url = (
-                self.baseUrl + f"/api/v2/nodes/{nodeId}/nodes?limit={limit}&page={page}"
-            )
+            url = self.baseUrl + f"/api/v2/nodes/{nodeId}/nodes?limit={limit}&page={page}"
             logging.debug(f"url: {url}")
             logging.debug(headers)
             r = self.session.get(url, headers=headers, timeout=60 * 30)
@@ -204,10 +194,7 @@ class crawler:
                 # the risk of recursive call a collection is that it can end in an infinity loop.
                 # folderTypesStopRecursive is a list of collectiontypes and children will be fetched.
                 # If there are also subfolders in that collection it won't fetch further.
-                if (
-                    dotfield(dataRow, "properties.type") in self.folderTypes
-                    and stopRecursive == False
-                ):
+                if dotfield(dataRow, "properties.type") in self.folderTypes and stopRecursive == False:
                     time.sleep(self.gracefulSleepSeconds)
                     # Recursive call
                     newParents = copy.deepcopy(parents)
@@ -221,16 +208,11 @@ class crawler:
                             "type_name": dotfield(dataRow, "properties.type_name"),
                         }
                     )
-                    if (
-                        dotfield(dataRow, "properties.type")
-                        in self.folderTypesStopRecursive
-                    ):
+                    if dotfield(dataRow, "properties.type") in self.folderTypesStopRecursive:
                         stopRecursive = True
                     else:
                         stopRecursive = False
-                    childs = self.children(
-                        dotfield(dataRow, "properties.id"), newParents, stopRecursive
-                    )
+                    childs = self.children(dotfield(dataRow, "properties.id"), newParents, stopRecursive)
                     results = results + childs
 
                 row = self.parseNodeColumns(dataRow, parents)
@@ -259,9 +241,7 @@ class crawler:
         :param str `complexQuery`:  See documentation for search options for a complexQuery: https://docs2.cer-rec.gc.ca/ll-eng/llisapi.dll?func=help.index&keyword=LL.Search%20Broker.Category
         """
 
-        file_path_resume = (
-            os.getcwd() + "/" + pathname2url(complexQuery)[0:15] + "_last_position.txt"
-        )
+        file_path_resume = os.getcwd() + "/" + pathname2url(complexQuery)[0:15] + "_last_position.txt"
 
         results = np.array([])
         headers = {"otcsticket": self.ticket}
@@ -280,11 +260,7 @@ class crawler:
             base_data["slice"] = slice
 
         # Retrieve all pages of certain search query using a while loop with security of maxCallsPerFolder variable.
-        while (
-            url != ""
-            and counter < self.maxCallsPerFolder
-            and max_error_retries < self.maxErrorRetry
-        ):
+        while url != "" and counter < self.maxCallsPerFolder and max_error_retries < self.maxErrorRetry:
             try:
                 counter = counter + 1
                 data = base_data.copy()
@@ -305,9 +281,7 @@ class crawler:
                 logging.debug(data)
 
                 # The post might sometimes fail thus stop the whole process, i have added a retry if the post fails to try again, this seems to work
-                r = self.session.post(
-                    post_url, headers=headers, timeout=60 * 30, data=data
-                )
+                r = self.session.post(post_url, headers=headers, timeout=60 * 30, data=data)
                 r.raise_for_status()
                 search_results = r.json()
 
