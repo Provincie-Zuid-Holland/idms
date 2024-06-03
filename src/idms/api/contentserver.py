@@ -233,6 +233,7 @@ class crawler:
         metadata: str = "true",
         slice: str = None,
         resume_last_position=True,
+        query_id: int = 0,
     ) -> list:
         """
         Search API endpoint
@@ -241,7 +242,7 @@ class crawler:
         :param str `complexQuery`:  See documentation for search options for a complexQuery: https://docs2.cer-rec.gc.ca/ll-eng/llisapi.dll?func=help.index&keyword=LL.Search%20Broker.Category
         """
 
-        file_path_resume = os.getcwd() + "/" + pathname2url(complexQuery)[0:15] + "_last_position.txt"
+        file_path_resume = os.getcwd() + "/" + f"{query_id}_last_position.txt"
 
         results = np.array([])
         headers = {"otcsticket": self.ticket}
